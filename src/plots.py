@@ -1,0 +1,109 @@
+"""Generacion de figuras para el laboratorio de cotizaciones optimas.
+
+Solo contiene logica de graficacion: recibe datos ya calculados por
+main.py o por el notebook y produce/guarda las figuras. matplotlib puro,
+estilo limpio (seaborn-v0_8-whitegrid con fallback a 'default').
+"""
+
+import os
+
+import matplotlib
+
+matplotlib.use("Agg")
+
+import matplotlib.pyplot as plt
+import numpy as np
+
+try:
+    plt.style.use("seaborn-v0_8-whitegrid")
+except OSError:
+    plt.style.use("default")
+
+plt.rcParams.update(
+    {
+        "figure.figsize": (8, 5),
+        "figure.dpi": 110,
+        "axes.titlesize": 13,
+        "axes.titleweight": "bold",
+        "axes.labelsize": 11,
+        "axes.edgecolor": "#444444",
+        "legend.frameon": False,
+        "font.size": 10,
+    }
+)
+
+REGIME_COLORS = {
+    "Optimo": "#2a6f97",
+    "Estrecho": "#e07a5f",
+    "Amplio": "#6a994e",
+}
+
+
+def _save(fig, save_path):
+    if save_path:
+        directory = os.path.dirname(save_path)
+        if directory:
+            os.makedirs(directory, exist_ok=True)
+        fig.savefig(save_path, bbox_inches="tight")
+    return fig
+
+
+def plot_price_distribution(price_pdf_fn, S0, p_min=5, p_max=40, save_path=None):
+    """Grafica la densidad f(P) del precio verdadero."""
+    P = np.linspace(p_min, p_max, 500)
+    fig, ax = plt.subplots()
+    ax.plot(P, price_pdf_fn(P), color="#2a6f97", lw=2)
+    ax.axvline(S0, color="#333333", ls="--", lw=1, label=f"$S_0$ = {S0:.2f}")
+    ax.set_title("Distribucion del precio verdadero  f(P) ~ Erlang(K=60, $\\lambda$=3)")
+    ax.set_xlabel("Precio P")
+    ax.set_ylabel("Densidad")
+    ax.legend()
+    return _save(fig, save_path)
+
+
+def plot_loss_functions(A_range, loss_ask, B_range, loss_bid, save_path=None):
+    """Grafica las perdidas esperadas frente a informados por lado."""
+    fig, ax = plt.subplots()
+    ax.plot(A_range, loss_ask, label="Perdida esperada Ask  $L_A(A)$", color="#e07a5f", lw=2)
+    ax.plot(B_range, loss_bid, label="Perdida esperada Bid  $L_B(B)$", color="#2a6f97", lw=2)
+    ax.set_title("Perdida esperada frente a traders informados")
+    ax.set_xlabel("Cotizacion")
+    ax.set_ylabel("Perdida esperada")
+    ax.legend()
+    return _save(fig, save_path)
+
+
+def plot_pnl_distributions(pnl_by_regime, save_path=None):
+    """Histograma comparativo del PnL por trade simulado en cada regimen."""
+    fig, ax = plt.subplots()
+    for name, pnl in pnl_by_regime.items():
+        ax.hist(
+            pnl,
+            bins=60,
+            alpha=0.5,
+            density=True,
+            label=name,
+            color=REGIME_COLORS.get(name, "#999999"),
+        )
+    ax.set_title("Distribucion del PnL por trade (10,000 trades simulados)")
+    ax.set_xlabel("PnL por trade")
+    ax.set_ylabel("Densidad")
+    ax.legend()
+    return _save(fig, save_path)
+
+
+def plot_monte_carlo_totals(totals_by_regime, save_path=None):
+    """Boxplot del PnL total por corrida de Monte Carlo, por regimen."""
+    fig, ax = plt.subplots()
+    labels = list(totals_by_regime.keys())
+    data = [totals_by_regime[label] for label in labels]
+    colors = [REGIME_COLORS.get(label, "#999999") for label in labels]
+
+    bp = ax.boxplot(data, labels=labels, patch_artist=True, widths=0.5)
+    for patch, color in zip(bp["boxes"], colors):
+        patch.set_facecolor(color)
+        patch.set_alpha(0.6)
+
+    ax.set_title("Monte Carlo: PnL total por corrida\n(1,000 corridas x 1,000 trades)")
+    ax.set_ylabel("PnL total por corrida")
+    return _save(fig, save_path)
