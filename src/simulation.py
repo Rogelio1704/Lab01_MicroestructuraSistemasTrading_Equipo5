@@ -14,6 +14,11 @@ con probabilidad pi_L:
 
 Esta construccion hace que el PnL esperado por trade simulado converja
 exactamente a Pi(A,B) definida en src/model.py.
+
+Cada trade tambien mueve el inventario del dealer: si el trader compra al
+ask, el dealer vende y su inventario baja (-1); si el trader vende al bid,
+el dealer compra y su inventario sube (+1); si no hay operacion, el cambio
+es 0.
 """
 
 import numpy as np
@@ -23,15 +28,25 @@ from src.model import ERLANG_K, ERLANG_LAMBDA, execution_prob
 
 
 def simulate_trades(n_trades, bid, ask, S0, pi_I, pi_L):
-    """Simula n_trades independientes y devuelve el PnL del dealer en cada uno."""
+    """Simula n_trades independientes.
+
+    Devuelve una tupla (pnl, inventory_change):
+    - pnl: PnL del dealer en cada trade.
+    - inventory_change: cambio de inventario del dealer en cada trade
+      (+1 si el trader vende al bid, -1 si el trader compra al ask, 0 si
+      no hay operacion).
+    """
     is_informed = np.random.rand(n_trades) < pi_I
     pnl = np.zeros(n_trades)
+    inventory_change = np.zeros(n_trades)
 
     n_informed = int(is_informed.sum())
     if n_informed > 0:
         P = stats.erlang.rvs(a=ERLANG_K, scale=1.0 / ERLANG_LAMBDA, size=n_informed)
         pnl_informed = np.where(P > ask, ask - P, np.where(P < bid, P - bid, 0.0))
+        inv_informed = np.where(P > ask, -1.0, np.where(P < bid, 1.0, 0.0))
         pnl[is_informed] = pnl_informed
+        inventory_change[is_informed] = inv_informed
 
     is_liquidity = ~is_informed
     n_liquidity = int(is_liquidity.sum())
@@ -44,14 +59,22 @@ def simulate_trades(n_trades, bid, ask, S0, pi_I, pi_L):
             ask - S0,
             np.where(r < p_buy + p_sell, S0 - bid, 0.0),
         )
+        inv_liquidity = np.where(
+            r < p_buy,
+            -1.0,
+            np.where(r < p_buy + p_sell, 1.0, 0.0),
+        )
         pnl[is_liquidity] = pnl_liquidity
+        inventory_change[is_liquidity] = inv_liquidity
 
-    return pnl
+    return pnl, inventory_change
 
 
 def run_regime(n_trades, bid, ask, S0, pi_I, pi_L):
-    """Simula un regimen de cotizacion y devuelve un resumen del PnL."""
-    pnl = simulate_trades(n_trades, bid, ask, S0, pi_I, pi_L)
+    """Simula un regimen de cotizacion y devuelve un resumen del PnL y del
+    inventario acumulado del dealer."""
+    pnl, inventory_change = simulate_trades(n_trades, bid, ask, S0, pi_I, pi_L)
+    inventory_path = np.cumsum(inventory_change)
     return {
         "bid": bid,
         "ask": ask,
@@ -60,6 +83,10 @@ def run_regime(n_trades, bid, ask, S0, pi_I, pi_L):
         "total_pnl": float(pnl.sum()),
         "mean_pnl": float(pnl.mean()),
         "std_pnl": float(pnl.std()),
+        "inventory_change": inventory_change,
+        "inventory_path": inventory_path,
+        "final_inventory": float(inventory_path[-1]),
+        "max_abs_inventory": float(np.max(np.abs(inventory_path))),
     }
 
 
@@ -68,6 +95,6 @@ def monte_carlo(n_runs, n_trades_per_run, bid, ask, S0, pi_I, pi_L):
     cada una y devuelve el arreglo de PnL total por corrida."""
     totals = np.empty(n_runs)
     for i in range(n_runs):
-        pnl = simulate_trades(n_trades_per_run, bid, ask, S0, pi_I, pi_L)
+        pnl, _ = simulate_trades(n_trades_per_run, bid, ask, S0, pi_I, pi_L)
         totals[i] = pnl.sum()
     return totals

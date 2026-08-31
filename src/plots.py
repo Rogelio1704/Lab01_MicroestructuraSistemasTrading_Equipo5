@@ -107,3 +107,57 @@ def plot_monte_carlo_totals(totals_by_regime, save_path=None):
     ax.set_title("Monte Carlo: PnL total por corrida\n(1,000 corridas x 1,000 trades)")
     ax.set_ylabel("PnL total por corrida")
     return _save(fig, save_path)
+
+
+def plot_execution_probability(spread_range, prob, zero_spread, save_path=None):
+    """Grafica la probabilidad de ejecucion de un trader de liquidez
+    (pi_LB / pi_LS) en funcion del spread respecto a S0, marcando el
+    punto donde la probabilidad llega a cero."""
+    fig, ax = plt.subplots()
+    ax.plot(spread_range, prob, color="#2a6f97", lw=2, label=r"$\pi_{LB}(s)=\pi_{LS}(s)$")
+    ax.axvline(zero_spread, color="#e07a5f", ls="--", lw=1.5)
+    ax.scatter([zero_spread], [0.0], color="#e07a5f", zorder=5)
+    ax.annotate(
+        f"s = {zero_spread:.2f}\n(prob = 0)",
+        xy=(zero_spread, 0.0),
+        xytext=(zero_spread, max(prob) * 0.15),
+        ha="center",
+        color="#e07a5f",
+        fontsize=9,
+    )
+    ax.set_title("Probabilidad de ejecucion vs. spread respecto a $S_0$")
+    ax.set_xlabel("Spread s = |cotizacion - $S_0$|")
+    ax.set_ylabel("Probabilidad de ejecucion")
+    ax.legend()
+    return _save(fig, save_path)
+
+
+def plot_inventory_paths(inventory_by_regime, save_path=None):
+    """Grafica el inventario acumulado del dealer a lo largo de los trades,
+    empalmando las curvas de los tres regimenes en los mismos ejes."""
+    fig, ax = plt.subplots()
+    for name, inventory_path in inventory_by_regime.items():
+        ax.plot(
+            np.arange(1, len(inventory_path) + 1),
+            inventory_path,
+            label=name,
+            color=REGIME_COLORS.get(name, "#999999"),
+            lw=1.2,
+        )
+    ax.axhline(0.0, color="#444444", lw=0.8)
+    ax.set_title("Inventario acumulado del dealer por regimen")
+    ax.set_xlabel("Numero de trade")
+    ax.set_ylabel("Inventario acumulado")
+    ax.legend()
+    return _save(fig, save_path)
+
+
+def plot_sensitivity_pi_I(pi_I_values, spreads, save_path=None):
+    """Grafica el spread optimo resultante de la optimizacion contra el
+    valor de pi_I (probabilidad de trader informado)."""
+    fig, ax = plt.subplots()
+    ax.plot(pi_I_values, spreads, marker="o", color="#6a994e", lw=2)
+    ax.set_title(r"Sensibilidad: spread optimo vs. $\pi_I$")
+    ax.set_xlabel(r"$\pi_I$ (probabilidad de trader informado)")
+    ax.set_ylabel("Spread optimo (A* - B*)")
+    return _save(fig, save_path)
