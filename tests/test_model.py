@@ -31,7 +31,7 @@ def test_optimal_spread_without_informed_traders():
     """Con pi_I=0 (monopolista puro), el spread optimo por lado es
     0.50/(2*0.08) = 3.125, y el spread total A-B es 0.50/0.08 = 6.25."""
     S0 = 19.90
-    result = optimize_quotes(S0=S0, pi_I=0.0, pi_L=0.60)
+    result = optimize_quotes(S0=S0, pi_I=0.0, pi_L=1.0)
 
     half_spread_analytic = LIQUIDITY_INTERCEPT / (2 * LIQUIDITY_SLOPE)
     total_spread_analytic = LIQUIDITY_INTERCEPT / LIQUIDITY_SLOPE
