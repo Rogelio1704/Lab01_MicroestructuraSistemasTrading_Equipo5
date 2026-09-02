@@ -1,6 +1,13 @@
 # Lab01 — Cotizaciones Óptimas de un Formador de Mercado
 
-Modelo de microestructura tipo Glosten–Milgrom: un *dealer* cotiza un
+## Integrantes
+
+- Rogelio Adrian Arroyo Valencia — Equipo 5
+- Andrea Santoyo Vega — Equipo 5
+
+## Descripción
+
+Modelo de Copeland y Galai (1983) un *dealer* cotiza un
 Bid (B) y un Ask (A) alrededor de un precio de referencia $S_0$. Cada
 trader que llega es **informado** (conoce el precio verdadero $P$ y
 solo opera si le conviene) con probabilidad $\pi_I$, o de **liquidez**
@@ -197,3 +204,10 @@ y crece con la probabilidad de enfrentarlos.
    hora del día, eventos macro y no es necesariamente simétrica entre
    compra y venta, lo que puede sesgar sistemáticamente el spread
    óptimo calculado aquí.
+
+## Uso de herramientas de IA
+
+Se utilizó Claude (Anthropic) como asistente durante el desarrollo del
+proyecto para revisión de código, depuración y verificación de que la
+implementación cumpliera con los requisitos del laboratorio. Todo el
+código fue revisado y comprendido por ambos integrantes del equipo.
