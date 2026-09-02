@@ -36,24 +36,35 @@ def simulate_trades(n_trades, bid, ask, S0, pi_I, pi_L):
       (+1 si el trader vende al bid, -1 si el trader compra al ask, 0 si
       no hay operacion).
     """
+    # Decidir si cada trader es informado o de liquidez
     is_informed = np.random.rand(n_trades) < pi_I
     pnl = np.zeros(n_trades)
     inventory_change = np.zeros(n_trades)
 
+    # --- Trades de informados ---
     n_informed = int(is_informed.sum())
     if n_informed > 0:
+        # El informado conoce P, el precio verdadero
         P = stats.erlang.rvs(a=ERLANG_K, scale=1.0 / ERLANG_LAMBDA, size=n_informed)
+        # Compra al ask si P > A (dealer pierde P - A)
+        # Vende al bid si P < B (dealer pierde B - P)
+        # Si B <= P <= A, no opera
         pnl_informed = np.where(P > ask, ask - P, np.where(P < bid, P - bid, 0.0))
         inv_informed = np.where(P > ask, -1.0, np.where(P < bid, 1.0, 0.0))
         pnl[is_informed] = pnl_informed
         inventory_change[is_informed] = inv_informed
 
+    # --- Trades de liquidez (desinformados) ---
     is_liquidity = ~is_informed
     n_liquidity = int(is_liquidity.sum())
     if n_liquidity > 0:
+        # Probabilidad de que ejecute, segun que tan lejos esta el precio del dealer de S0
         p_buy = execution_prob(ask - S0)
         p_sell = execution_prob(S0 - bid)
         r = np.random.rand(n_liquidity)
+        # Si r < p_buy, compra al ask (dealer gana ask - S0)
+        # Si r < p_buy + p_sell, vende al bid (dealer gana S0 - bid)
+        # Si no, no opera
         pnl_liquidity = np.where(
             r < p_buy,
             ask - S0,

@@ -19,10 +19,13 @@ def test_execution_prob_is_never_negative():
 
 def test_expected_loss_ask_is_decreasing_in_A():
     S0 = 19.90
-    A_low = S0 + 0.10
-    A_high = S0 + 1.00
-    assert expected_loss_ask(A_low) > expected_loss_ask(A_high)
-
+    A1 = S0 + 0.10
+    A2 = S0 + 1.00
+    A3 = S0 + 3.00
+    loss1 = expected_loss_ask(A1)
+    loss2 = expected_loss_ask(A2)
+    loss3 = expected_loss_ask(A3)
+    assert loss1 > loss2 > loss3
 
 def test_optimal_spread_without_informed_traders():
     """Con pi_I=0 (monopolista puro), el spread optimo por lado es
