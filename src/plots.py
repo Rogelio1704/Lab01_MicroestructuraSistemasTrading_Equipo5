@@ -93,19 +93,22 @@ def plot_pnl_distributions(pnl_by_regime, save_path=None):
 
 
 def plot_monte_carlo_totals(totals_by_regime, save_path=None):
-    """Boxplot del PnL total por corrida de Monte Carlo, por regimen."""
+    """Histograma de la distribucion de PnL final del analisis de Monte
+    Carlo, con los tres regimenes superpuestos."""
     fig, ax = plt.subplots()
-    labels = list(totals_by_regime.keys())
-    data = [totals_by_regime[label] for label in labels]
-    colors = [REGIME_COLORS.get(label, "#999999") for label in labels]
-
-    bp = ax.boxplot(data, labels=labels, patch_artist=True, widths=0.5)
-    for patch, color in zip(bp["boxes"], colors):
-        patch.set_facecolor(color)
-        patch.set_alpha(0.6)
-
-    ax.set_title("Monte Carlo: PnL total por corrida\n(1,000 corridas x 1,000 trades)")
-    ax.set_ylabel("PnL total por corrida")
+    for name, totals in totals_by_regime.items():
+        ax.hist(
+            totals,
+            bins=40,
+            alpha=0.5,
+            density=True,
+            label=name,
+            color=REGIME_COLORS.get(name, "#999999"),
+        )
+    ax.set_title("Monte Carlo: distribucion del PnL final por corrida\n(1,000 corridas x 1,000 trades)")
+    ax.set_xlabel("PnL total por corrida")
+    ax.set_ylabel("Densidad")
+    ax.legend()
     return _save(fig, save_path)
 
 
@@ -151,6 +154,25 @@ def plot_inventory_paths(inventory_by_regime, save_path=None):
     ax.legend()
     return _save(fig, save_path)
 
+def plot_cumulative_pnl(pnl_by_regime, save_path=None):
+    """PnL acumulado del dealer a lo largo de los trades, con las tres
+    curvas de regimen en los mismos ejes."""
+    fig, ax = plt.subplots()
+    for name, pnl in pnl_by_regime.items():
+        cumulative = np.cumsum(pnl)
+        ax.plot(
+            np.arange(1, len(cumulative) + 1),
+            cumulative,
+            label=name,
+            color=REGIME_COLORS.get(name, "#999999"),
+            lw=1.2,
+        )
+    ax.axhline(0.0, color="#444444", lw=0.8)
+    ax.set_title("PnL acumulado del dealer por regimen (10,000 trades)")
+    ax.set_xlabel("Numero de trade")
+    ax.set_ylabel("PnL acumulado")
+    ax.legend()
+    return _save(fig, save_path)
 
 def plot_sensitivity_pi_I(pi_I_values, spreads, save_path=None):
     """Grafica el spread optimo resultante de la optimizacion contra el

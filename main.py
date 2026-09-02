@@ -20,6 +20,7 @@ from src.model import (
     price_pdf,
 )
 from src.plots import (
+    plot_cumulative_pnl,
     plot_execution_probability,
     plot_inventory_paths,
     plot_loss_functions,
@@ -81,9 +82,11 @@ def main():
     for name, (bid, ask) in regimes.items():
         totals = monte_carlo(MC_RUNS, MC_TRADES, bid, ask, BASE_S0, BASE_PI_I, BASE_PI_L)
         totals_by_regime[name] = totals
+        prob_loss = float((totals < 0).mean())
         print(
             f"{name:10s} media={totals.mean():10.2f}  "
             f"std={totals.std():8.2f}  "
+            f"P(perdida)={prob_loss:.4f}  "
             f"p5={np.percentile(totals, 5):9.2f}  "
             f"p95={np.percentile(totals, 95):9.2f}"
         )
@@ -122,6 +125,9 @@ def main():
     )
     plot_monte_carlo_totals(
         totals_by_regime, save_path=f"{FIGURES_DIR}/monte_carlo.png"
+    )
+    plot_cumulative_pnl(
+        pnl_by_regime, save_path=f"{FIGURES_DIR}/pnl_acumulado.png"
     )
     plot_execution_probability(
         spread_range, exec_prob, zero_spread,
