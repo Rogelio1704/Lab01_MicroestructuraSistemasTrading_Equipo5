@@ -62,9 +62,8 @@ orquesta llamadas; el notebook solo importa y grafica.
 ```bash
 pip install -r requirements.txt
 
-python main.py            # corre todo el flujo y guarda figuras en figures/
-pytest tests/ -v           # corre las 3 pruebas del modelo
-jupyter notebook notebooks/analysis.ipynb
+python main.py            # corre todo: optimizacion, simulacion, figuras y tests
+jupyter notebook notebooks/analysis.ipynb  # graficas con interpretaciones
 ```
 
 `main.py` fija `np.random.seed(42)` de forma global antes de cualquier

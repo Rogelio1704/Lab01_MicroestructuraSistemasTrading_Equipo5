@@ -141,7 +141,13 @@ def main():
         save_path=f"{FIGURES_DIR}/sensibilidad_pi_I.png",
     )
 
-    print(f"\nFiguras guardadas en '{FIGURES_DIR}/'.")
+
+    print(f"\nFiguras guardadas en '{FIGURES_DIR}'.")
+
+    # Ejecutar pruebas automaticas
+    import subprocess
+    print("\n=== Pruebas (pytest) ===")
+    subprocess.run(["python", "-m", "pytest", "tests/", "-v"])
 
 
 if __name__ == "__main__":
